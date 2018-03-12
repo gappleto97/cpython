@@ -1411,10 +1411,10 @@ static PyTypeObject takewhile_type = {
 typedef struct {
     PyObject_HEAD
     PyObject *it;
-    Py_ssize_t next;
-    Py_ssize_t stop;
+    unsigned long long next;
+    unsigned long long stop;
     Py_ssize_t step;
-    Py_ssize_t cnt;
+    unsigned long long cnt;
 } isliceobject;
 
 static PyTypeObject islice_type;
@@ -1423,7 +1423,8 @@ static PyObject *
 islice_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *seq;
-    Py_ssize_t start=0, stop=-1, step=1;
+    unsigned long long start=0, stop=-1;
+    Py_ssize_t step=1;
     PyObject *it, *a1=NULL, *a2=NULL, *a3=NULL;
     Py_ssize_t numargs;
     isliceobject *lz;
@@ -1437,8 +1438,8 @@ islice_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     numargs = PyTuple_Size(args);
     if (numargs == 2) {
         if (a1 != Py_None) {
-            stop = PyNumber_AsSsize_t(a1, PyExc_OverflowError);
-            if (stop == -1) {
+            stop = PyLong_AsUnsignedLongLong(a1);
+            if (stop == (unsigned long long) -1) {
                 if (PyErr_Occurred())
                     PyErr_Clear();
                 PyErr_SetString(PyExc_ValueError,
@@ -1449,11 +1450,11 @@ islice_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         }
     } else {
         if (a1 != Py_None)
-            start = PyNumber_AsSsize_t(a1, PyExc_OverflowError);
+            start = PyLong_AsUnsignedLongLong(a1);
         if (start == -1 && PyErr_Occurred())
             PyErr_Clear();
         if (a2 != Py_None) {
-            stop = PyNumber_AsSsize_t(a2, PyExc_OverflowError);
+            stop = PyLong_AsUnsignedLongLong(a2);
             if (stop == -1) {
                 if (PyErr_Occurred())
                     PyErr_Clear();
@@ -1523,8 +1524,8 @@ islice_next(isliceobject *lz)
 {
     PyObject *item;
     PyObject *it = lz->it;
-    Py_ssize_t stop = lz->stop;
-    Py_ssize_t oldnext;
+    unsigned long long stop = lz->stop;
+    unsigned long long oldnext;
     PyObject *(*iternext)(PyObject *);
 
     if (it == NULL)
@@ -1593,7 +1594,7 @@ islice_reduce(isliceobject *lz)
 static PyObject *
 islice_setstate(isliceobject *lz, PyObject *state)
 {
-    Py_ssize_t cnt = PyLong_AsSsize_t(state);
+    unsigned long long cnt = PyLong_AsUnsignedLongLong(state);
 
     if (cnt == -1 && PyErr_Occurred())
         return NULL;
